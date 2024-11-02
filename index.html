@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Import/Export Shipment</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Shipment Import/Export System</h1>
+    <h2>Upload Shipment Data</h2>
+    <input type="file" id="csvFileInput" />
+    <button id="uploadButton">Upload CSV</button>
+    <div id="response"></div>
+
+    <script>
+        $("#uploadButton").click(function () {
+            var file = document.getElementById("csvFileInput").files[0];
+            var reader = new FileReader();
+
+            reader.onload = function (event) {
+                var csvData = event.target.result;
+                uploadCSV(csvData);
+            };
+
+            reader.readAsText(file);
+        });
+
+        function uploadCSV(csvData) {
+            $.ajax({
+                url: 'https://wo3kyqoo93.execute-api.us-east-1.amazonaws.com/dev',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ "data": csvData }),
+                success: function (response) {
+                    $("#response").text("CSV uploaded and processed successfully!");
+                },
+                error: function (error) {
+                    $("#response").text("Error uploading CSV: " + error);
+                }
+            });
+        }
+    </script>
+</body>
+</html>
