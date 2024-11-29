@@ -1,47 +1,107 @@
 <!DOCTYPE html>
-<?php header('Access-Control-Allow-Origin: *'); ?>
-
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Import/Export Shipment</title>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <title>Product Submission</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            max-width: 600px;
+        }
+        form {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        input, button {
+            margin-top: 5px;
+            padding: 8px;
+            font-size: 16px;
+        }
+        #response {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
 </head>
 <body>
-    <h1>Shipment Import/Export System</h1>
-    <h2>Upload Shipment Data</h2>
-    <input type="file" id="csvFileInput" />
-    <button id="uploadButton">Upload CSV</button>
+    <h1>Submit Product</h1>
+    <form id="productForm">
+        <label for="productName">Product Name</label>
+        <input type="text" id="productName" placeholder="Enter product name" required />
+
+        <label for="productPrice">Product Price</label>
+        <input type="number" id="productPrice" placeholder="Enter product price" required />
+
+        <label for="productImage">Product Image</label>
+        <input type="file" id="productImage" accept="image/*" required />
+
+        <button type="submit">Submit</button>
+    </form>
+
     <div id="response"></div>
 
     <script>
-        $("#uploadButton").click(function () {
-            var file = document.getElementById("csvFileInput").files[0];
-            var reader = new FileReader();
+        document.getElementById('productForm').addEventListener('submit', async function (event) {
+            event.preventDefault();
 
-            reader.onload = function (event) {
-                var csvData = event.target.result;
-                uploadCSV(csvData);
+            const productName = document.getElementById('productName').value;
+            const productPrice = document.getElementById('productPrice').value;
+            const productImageFile = document.getElementById('productImage').files[0];
+
+            if (!productName || !productPrice || !productImageFile) {
+                alert('Please fill all fields and attach an image.');
+                return;
+            }
+
+            // Convert image to Base64
+            const toBase64 = file => new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]); // Remove Base64 prefix
+                reader.onerror = error => reject(error);
+            });
+
+            const productImageBase64 = await toBase64(productImageFile);
+
+            // API endpoint and payload
+            const apiEndpoint = "https://jddmy9tang.execute-api.us-east-1.amazonaws.com/prod/add";
+            const apiKey = "ZWGwDkH0MO5j7tI1wi1lQ9izvUbsgzrX4h0MhpeN";
+
+            const payload = {
+                product_name: productName,
+                product_price: parseFloat(productPrice),
+                product_image: productImageBase64
             };
 
-            reader.readAsText(file);
-        });
+            // Send request to API
+            try {
+                const response = await fetch(apiEndpoint, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "x-api-key": apiKey
+                    },
+                    body: JSON.stringify(payload)
+                });
 
-        function uploadCSV(csvData) {
-            $.ajax({
-                url: 'https://wo3kyqoo93.execute-api.us-east-1.amazonaws.com/dev',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ "data": csvData }),
-                success: function (response) {
-                    $("#response").text("CSV uploaded and processed successfully!");
-                },
-                error: function (error) {
-                    $("#response").text("Error uploading CSV: " + error);
-                }
-            });
-        }
+                const responseData = await response.json();
+
+                // Display the response
+                document.getElementById('response').innerText = JSON.stringify(responseData, null, 2);
+            } catch (error) {
+                document.getElementById('response').innerText = "Error: " + error.message;
+            }
+        });
     </script>
 </body>
 </html>
