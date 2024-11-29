@@ -129,9 +129,10 @@
                 });
 
                 const responseData = await response.json();
+                const responseBody = JSON.parse(responseData.body);
 
                 if (response.ok) {
-                    document.getElementById('response').innerText = `Success! Product added successfully with Product ID: ${responseData.product_id}`;
+                    document.getElementById('response').innerText = `Success! Product added successfully with Product ID: ${responseBody.product_id}`;
                     document.getElementById('error').innerText = '';
                 } else {
                     document.getElementById('error').innerText = `Error: ${responseData.message}`;
